@@ -2,8 +2,8 @@
 import fs from 'fs';
 import { db } from '../db/config.js';
 import { meds } from '../db/schema.js';
-import { Readline, createInterface } from 'node:readline/promises';
-import { eq, like, or, sql } from 'drizzle-orm';
+import {  createInterface } from 'node:readline/promises';
+import {  like, or } from 'drizzle-orm';
 
 
 const CSV_PATH = './assets/DADOS_ABERTOS_MEDICAMENTOS(in).csv';
@@ -37,8 +37,6 @@ export async function readAndSaveFile() {
   }
 
   rl.close();
-
-
 
 }
 

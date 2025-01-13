@@ -4,7 +4,13 @@ import {  readAndSaveFile, saveMedsToDb, searchByName } from "../modules/meds.js
 const meds = new Hono()
 
 meds.get('/', async (c) => {
-  // await readAndSaveFile()
+  const key = c.req.query('key')
+
+  if (key !== process.env.KEY) {
+    return c.json({ message: 'Invalid key' }, 401)
+  }
+
+  await readAndSaveFile()
   return c.json({ message: 'Meds saved' })
 })
 
