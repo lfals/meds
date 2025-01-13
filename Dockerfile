@@ -1,46 +1,27 @@
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=22.13.0
-FROM node:${NODE_VERSION}-slim AS base
+# Use the official Go image as the base image
+FROM golang:1.23.4-alpine
 
-LABEL fly_launch_runtime="Node.js"
+# Install build dependencies for SQLite
+RUN apk add --no-cache gcc musl-dev
 
-# Node.js app lives here
+# Set the working directory inside the container
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
+# Copy go.mod and go.sum files (if they exist)
+COPY go.mod ./
+COPY go.sum ./
 
-# Install pnpm
-ARG PNPM_VERSION=9.15.3
-RUN npm install -g pnpm@$PNPM_VERSION
+# Download Go module dependencies
+RUN go mod download
 
-
-# Throw-away build stage to reduce size of final image
-FROM base AS build
-
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
-
-# Install node modules
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-# Copy application code
+# Copy the source code into the container
 COPY . .
 
+# Build the Go application with CGO enabled
+RUN CGO_ENABLED=1 go build -o main .
 
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Setup sqlite3 on a separate volume
-RUN mkdir -p /data
-VOLUME /data
-
-# Start the server by default, this can be overwritten at runtime
+# Expose port 3000
 EXPOSE 3000
-ENV DATABASE_URL="file:///data/sqlite.db"
-CMD [ "npm run run"]
+
+# Command to run the executable
+CMD ["./main"]
